@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, /* other imports */ } from '@angular/core';
 import { ConstructionWorkService } from '../construction-work.service';
 
 @Component({
@@ -18,13 +19,8 @@ export class CloseRoadworkComponent implements OnInit {
   constructionWorks: ConstructionWork[] = [];
   searchText: string = '';
 
-  constructor(private constructionWorkService: ConstructionWorkService) { }
+  constructor(private constructionWorkService: ConstructionWorkService , private cdRef: ChangeDetectorRef) { }
 
-  cards = [
-    { name: 'Card 1', status: 'Status 1', image: 'path/to/image1.jpg' },
-    { name: 'Card 2', status: 'Status 2', image: 'path/to/image2.jpg' },
-    // Add more cards here
-  ];
 
   ngOnInit(): void {
     this.getConstructionWorks();
@@ -32,7 +28,7 @@ export class CloseRoadworkComponent implements OnInit {
   }
 
 
-  getConstructionWorks() {
+    getConstructionWorks() {
     this.constructionWorkService.getAllConstructionWork()
       .subscribe((works: ConstructionWork[]) => {
         this.constructionWorks = works;
@@ -40,10 +36,20 @@ export class CloseRoadworkComponent implements OnInit {
   }
 
   deleteConstructionWork(selectedWork: ConstructionWork) {
+    console.log("Deleting construction work, selected work id: " + selectedWork.id);
+  
     this.constructionWorkService.deleteConstructionWork(selectedWork.id)
       .subscribe(() => {
-        this.constructionWorks = this.constructionWorks.filter(work => work.id !== selectedWork.id);
-      });
+          console.log("API call successful. Removing from constructionWorks array.");
+          this.constructionWorks = this.constructionWorks.filter(work => work.id !== selectedWork.id);
+          console.log("constructionWorks after deletion:", this.constructionWorks);
+        },
+        error => {
+          console.error("API call failed:", error);
+        }
+      );
+    this.constructionWorks = this.constructionWorks.filter(work => work.id !== selectedWork.id);
+    console.log("ConstructionWorks before deletion:", this.constructionWorks);
     this.selectedCard = null;  
   }
 
@@ -104,6 +110,7 @@ export class CloseRoadworkComponent implements OnInit {
 
 interface ConstructionWork {
   id: number;
+  planId: number;
   street: string;
   city: string;
   startDate: string;
@@ -111,4 +118,12 @@ interface ConstructionWork {
   status: string;
 }
 
+interface Signs {
+  id: number;
+  csId: number;
+  planId: number;
+  ogAngle: number;
+  currAngle: number;
+  issue?: string;
+}
 

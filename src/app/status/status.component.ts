@@ -21,30 +21,58 @@ export class StatusComponent implements OnInit {
   searchText: string = '';
 
   constructionWorks: ConstructionWork[] = [];
+  allSigns:Signs[] =[];
   retrievedSigns: Signs[] = [];
 
   constructor(private constructionWorkService: ConstructionWorkService) { }
 
   ngOnInit(): void {
     this.getConstructionWorks();
+    this.getSigns()
     this.checkViewport();
-    // this.updateConstructionWorkStatuses();
   }
 
+  ngOnUpdate():void {
+    this.getConstructionWorks();
+    this.getSigns()
+  }
 
   getConstructionWorks() {
     this.constructionWorkService.getAllConstructionWork()
       .subscribe((works: ConstructionWork[]) => {
-        this.constructionWorks = works;
+        this.constructionWorks = works
+        console.log("get all C Works" +this.constructionWorks);
       });
+  }
 
+  getSigns() {
+    this.constructionWorkService.getAllSigns()
+      .subscribe((signs: Signs[]) => {
+        this.allSigns = signs.map(sign => ({ ...sign, issue: 'OK' }));
+        console.log("get all signs : " + this.allSigns[0].issue);
+        this.constructionWorks.forEach(work => {
+          if (this.hasIssues(work.id)) {
+            work.status = "Angle Issue";
+          }
+        });
+      });
   }
 
   retrieveSignsByWorkId(card: any) {
     this.selectedConstructionWork = card;
     this.constructionWorkService.getSignsByWorkId(card.id)
       .subscribe((signs) => {
-        this.retrievedSigns = signs;
+        this.retrievedSigns = signs.map(sign => {
+          if (Math.abs(sign.currAngle - sign.ogAngle) > 5) {
+            sign.issue = "Angle Issue";
+          } else {
+            sign.issue = "OK";
+          }
+          return sign;
+        });
+  
+        // Update the issue and status fields for the selected construction work
+        this.selectedConstructionWork.status = this.retrievedSigns.some(sign => sign.issue === "Angle Issue") ? "Angle Issue" : "OK";
       });
   }
 
@@ -80,6 +108,7 @@ export class StatusComponent implements OnInit {
   };
 
   showDetails(card: any) {
+    console.log(card)
     this.selectedCard = card;
   }
 
@@ -98,32 +127,105 @@ export class StatusComponent implements OnInit {
 
   goBack() {
     this.selectedCard = null;
+
   }
 
   goBackSigns() {
+    this.hasIssues(this.selectedConstructionWork.id);
     this.selectedConstructionWork = null;
     this.selectedCard = null;
+    this.retrievedSigns = [];
   }
 
-  hasIssues(workId: number): boolean {
-    const relatedSigns = this.retrievedSigns.filter(sign => sign.workId === workId);
-    return relatedSigns.some(sign => sign.issue.trim() !== '');
-  }
-
-  // updateConstructionWorkStatuses() {
-  //   this.constructionWorks.forEach(work => {
-  //     this.constructionWorkService.getSignsByWorkId(work.id)
-  //       .subscribe((signs: Signs[]) => {
-  //         const hasIssues = signs.some(sign => sign.issue !== ' ');
-  //         work.status = hasIssues ? 'ISSUE' : 'OK';
-  //       });
+  // hasIssues(workId: number): boolean {
+  //   // this.getSigns();
+  //   const selectedWork = this.constructionWorks.filter(work => work.id === workId);
+  //   const relatedSigns = this.allSigns.filter(sign => sign.csId === workId);
+  //   // return relatedSigns.some(sign => sign.issue.trim() !== 'None');
+  //   return relatedSigns.some(sign => {
+  //     // if (sign.issue.trim() !== 'None') {
+  //     //   console.log("sign id  : " +sign.id);
+  //     //   selectedWork[0].status == "Angle Issue";
+  //     //   return true;
+  //     // }
+  //     console.log("curr angle" + sign.currAngle)
+  //     if (sign.currAngle !== sign.ogAngle) {
+  //       sign.issue = "Angle Issue";
+  //       // console.log("/n issue " + sign.issue)
+  //       selectedWork[0].status == "Angle Issue";
+  //       return true;
+        
+  //     }
+  //     selectedWork[0].status =="OK";
+  //     return false;
   //   });
   // }
+
+  hasIssues(workId: number): boolean {
+    const selectedWork = this.constructionWorks.find(work => work.id === workId);
+    const relatedSigns = this.allSigns.filter(sign => sign.csId === workId);
+    
+    let hasIssue = false;
+  
+    relatedSigns.forEach(sign => {
+      if (Math.abs(sign.currAngle - sign.ogAngle) > 5) {
+        sign.issue = "Angle Issue";
+        hasIssue = true;
+      } else {
+        sign.issue = "OK";
+      }
+    });
+  
+    if(selectedWork)
+    selectedWork.status = hasIssue ? "Angle Issue" : "OK";
+  
+    return hasIssue;
+  }
+
+
+  // fixIssue(Id:number,workId:number) {
+  //   var signId = Id
+  //   const selectedSign = this.allSigns.filter(sign => sign.csId === workId && sign.id === signId);
+  //   selectedSign[0].issue = "None"
+  //   selectedSign[0].currAngle == selectedSign[0].ogAngle
+  //   const selectedWork = this.constructionWorks.filter(work => work.id === workId);
+  //   const relatedSigns = this.allSigns.filter(sign => sign.csId === workId);
+  //   if (!relatedSigns.some(sign => sign.issue !== 'None'))
+  //   {
+  //     selectedWork[0].status = "OK"
+  //   }
+  //   console.log(workId,signId,selectedSign[0]);
+  // }
+
+  UpdateAngle(Id: number, workId: number){
+    const selectedSign = this.allSigns.filter(sign => sign.csId === workId && sign.id === Id);
+    console.log('Updated sign id:' + Id + "  workid  " + workId); // Debug line
+    console.log('Updated selectedSign:', selectedSign); // Debug line
+
+
+    return selectedSign.some(sign => {
+      if (sign) {
+        console.log("ANGLES Og and curr  "  +  sign.ogAngle + sign.currAngle )
+        sign.currAngle = sign.ogAngle;
+        this.constructionWorkService.updateSign(sign).subscribe(() => {
+          console.log("Sign updated successfully!");
+          this.hasIssues(workId);
+        });
+
+        this.constructionWorkService.checkSignAngle(sign).subscribe(() => {
+          console.log("Sign angle Correct!");
+        });
+      }
+    });
+
+  }
+
 
 }
 
 interface ConstructionWork {
   id: number;
+  planId: number;
   street: string;
   city: string;
   startDate: string;
@@ -132,9 +234,10 @@ interface ConstructionWork {
 }
 
 interface Signs {
-  signId: number;
-  workId:number;
-  issueDate: string;
-  issueTime: string;
-  issue: string;
+  id: number;
+  csId: number;
+  planId: number;
+  ogAngle: number;
+  currAngle: number;
+  issue?: string;
 }

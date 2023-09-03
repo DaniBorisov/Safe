@@ -110,6 +110,7 @@
 
 .details-container {
   margin-top: 20px;
+  display: block;
 }
 
 .details-container p {
@@ -117,14 +118,42 @@
 }
 
 .image-container{
+  border-top: solid .5px rgb(28, 20, 20);
+  border-bottom: solid .5px rgb(28, 20, 20);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .image-container img{
+  margin-top: 10px;
+  margin-bottom: 10px;
   width: 50%;
   height: auto
+}
+
+
+
+.date-container {
+  display: grid;
+  grid-template-columns: repeat(2, 250px); 
+  border-bottom: solid .5px rgb(28, 20, 20);
+  justify-content: center;
+}
+
+.date-container > div {
+  margin-right: 20px;
+  margin-bottom: 10px;
+}  
+
+.date-container   label {
+  font-weight: bold;
+}
+
+.delete-button-container{
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 
@@ -170,9 +199,27 @@
 .mobile-view .details-container {
   flex-grow: 1;
   overflow-y: auto; /* Enable vertical scrolling */
-  border-bottom: 1px solid #ccc; /* Add border on the bottom */
+
+  /* border-bottom: 1px solid #ccc;  */
+  /* Add border on the bottom */
   padding-bottom: 20px; /* Add some padding at the bottom */
 }
 
 
+
+.mobile-view .image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile-view .image-container img {
+  width: -webkit-fill-available;
+}
+
+.mobile-view .date-container {
+  display: flex;
+  border-bottom: solid 0.5px rgb(28, 20, 20);
+  margin-bottom: 10px;
+}
 

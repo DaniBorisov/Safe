@@ -22,7 +22,7 @@ export class LogInComponent implements OnInit {
           this.router.navigate(['/dashboard']);
         } else {
           this.loginFail = true;
-          // alert('Invalid credentials. Please try again.' +"username: "+ username + " "  + "  Password: " + password);
+          alert('Invalid credentials. Please try again.' +"username: "+ username + " "  + "  Password: " + password);
           username = '';
           password = '';
         }

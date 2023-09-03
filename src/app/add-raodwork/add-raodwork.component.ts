@@ -16,12 +16,13 @@ export class AddRaodworkComponent implements OnInit {
   showSignCont: boolean = false;
 
   newConstructionWork: ConstructionWork = {
-    id: Math.floor(Math.random() * (50 - 1 + 1)) + 1,
-    street: '',
-    city: '',
-    startDate: '10.07.23',
-    endDate: '28.08.23',
-    status: 'OK'
+    "id": Math.floor(Math.random() * (50 - 1 + 1)) + 1,
+    "planId": Math.floor(Math.random() * (47 - 1 + 1)) + 1,
+    "street": '',
+    "city": '',
+    "startDate": '10.07.23',
+    "endDate": '28.08.23',
+    "status": ''
   };
 
   signsData: Signs[] = [];
@@ -86,29 +87,53 @@ export class AddRaodworkComponent implements OnInit {
   }
 
   addConstructionWork() {
-    this.constructionWorkService.addConstructionWork(this.newConstructionWork,this.signsData)
+    const payload = {
+      csSite: {
+        id: this.newConstructionWork.id.toString(),
+        city: this.newConstructionWork.city,
+        street: this.newConstructionWork.street,
+        startDate: this.newConstructionWork.startDate,
+        endDate: this.newConstructionWork.endDate,
+        mainResponsible: 'string', // Set this value as appropriate
+        signIds: this.signsData.map(sign => sign.id.toString())
+      },
+      signs: this.signsData.map(sign => ({
+        id: sign.id.toString(),
+        csId: sign.csId.toString(),
+        projectId: 'string', // Set this value as appropriate
+        ogAngle: sign.ogAngle,
+        currAngle: sign.currAngle
+      }))
+    };
+
+    this.constructionWorkService.addConstructionWork(payload)
       .subscribe(() => {
         // Clear form fields after successful addition
         this.newConstructionWork = {
-          id:  0,
+          id: 0,
+          planId: 0,
           street: '',
           city: '',
           startDate: '',
           endDate: '',
           status: 'OK'
         };
+        this.signsData = []; // Clear the signs data as well
       });
-      this.router.navigate(['/dashboard']);
-
+    console.log("diddd " + this.newConstructionWork.id)
+    this.router.navigate(['/dashboard']);
   }
 
+
+
   addSign() {
+    const newId = Number(`${this.newConstructionWork.id}${ Math.floor(Math.random() * (200 - 1 + 1)) + 1}`);
     const newSign: Signs = {
-      signId: this.signsData.length + 1,
-      workId: this.newConstructionWork.id,
-      issueDate: '20.05.23',
-      issueTime: '23:35',
-      issue: 'Tilt'
+      "id": newId,
+      "csId": this.newConstructionWork.id,
+      "planId":  Math.floor(Math.random() * (200 - 1 + 1)) + 1,
+      "ogAngle": 60,
+      "currAngle": 60,
     };
     this.signsData.push(newSign);
   }
@@ -117,6 +142,7 @@ export class AddRaodworkComponent implements OnInit {
 
 interface ConstructionWork {
   id: number;
+  planId: number;
   street: string;
   city: string;
   startDate: string;
@@ -125,9 +151,10 @@ interface ConstructionWork {
 }
 
 interface Signs {
-  signId: number;
-  workId:number;
-  issueDate: string;
-  issueTime: string;
-  issue: string;
+  id: number;
+  csId: number;
+  planId: number;
+  ogAngle: number;
+  currAngle: number;
+  issue?: string;
 }
